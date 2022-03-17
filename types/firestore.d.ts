@@ -1684,9 +1684,17 @@ declare namespace FirebaseFirestore {
       onError?: (error: Error) => void
     ): () => void;
 
-    aggregate(field: AggregateField): AggregateQuery;
+    aggregate(
+      field: AggregateField,
+      ...fields: AggregateField[]
+    ): AggregateQuery;
 
     count(): AggregateQuery;
+
+    groupBy(
+      field: string | FieldPath,
+      ...fields: (string | FieldPath | AggregateField)[]
+    ): GroupByQuery;
 
     /**
      * Returns true if this `Query` is equal to the provided one.
@@ -2016,6 +2024,12 @@ declare namespace FirebaseFirestore {
     private constructor();
 
     static count(options?: CountAggregateFieldOptions): AggregateField<number>;
+    static min(field: string | FieldPath): AggregateField;
+    static max(field: string | FieldPath): AggregateField;
+    static average(field: string | FieldPath): AggregateField<number>;
+    static sum(field: string | FieldPath): AggregateField<number>;
+    static first(field: string | FieldPath): AggregateField;
+    static last(field: string | FieldPath): AggregateField;
 
     isEqual(other: AggregateField): boolean;
   }
@@ -2047,6 +2061,100 @@ declare namespace FirebaseFirestore {
     ): () => void;
 
     isEqual(other: AggregateQuery): boolean;
+  }
+
+  export class GroupSnapshot {
+    private constructor();
+
+    readonly readTime: Timestamp;
+
+    readonly aggregations: Array<AggregateField>;
+
+    readonly fields: Array<FieldPath>;
+
+    get(field: string | FieldPath): any;
+    get<T>(field: AggregateField<T>): T;
+
+    isEqual(other: GroupSnapshot): boolean;
+  }
+
+  export type GroupChangeType = 'added' | 'removed' | 'modified';
+
+  export interface GroupChange {
+    readonly type: GroupChangeType;
+
+    readonly group: GroupSnapshot;
+
+    readonly oldIndex: number;
+
+    readonly newIndex: number;
+
+    isEqual(other: GroupChange): boolean;
+  }
+
+  export class GroupByQuerySnapshot {
+    private constructor();
+
+    readonly query: GroupByQuery;
+
+    readonly readTime: Timestamp;
+
+    readonly groups: Array<GroupSnapshot>;
+
+    readonly size: number;
+
+    readonly empty: boolean;
+
+    groupChanges(): GroupChange[];
+
+    forEach(callback: (result: GroupSnapshot) => void, thisArg?: any): void;
+
+    isEqual(other: GroupByQuerySnapshot): boolean;
+  }
+
+  export class GroupByQuery {
+    private constructor();
+
+    readonly query: Query<DocumentData>;
+
+    get(): Promise<GroupByQuerySnapshot>;
+
+    // Returns a stream of GroupSnapshot.
+    stream(): NodeJS.ReadableStream;
+
+    onSnapshot(
+      onNext: (snapshot: GroupByQuerySnapshot) => void,
+      onError?: (error: Error) => void
+    ): () => void;
+
+    groupOrderBy(
+      fieldPath: string | FieldPath | AggregateField,
+      directionStr?: OrderByDirection
+    ): GroupByQuery;
+
+    groupLimit(limit: number): GroupByQuery;
+
+    groupLimitToLast(limit: number): GroupByQuery;
+
+    groupOffset(offset: number): GroupByQuery;
+
+    groupStartAt(snapshot: GroupSnapshot): GroupByQuery;
+
+    groupStartAt(...fieldValues: any[]): GroupByQuery;
+
+    groupStartAfter(snapshot: GroupSnapshot): GroupByQuery;
+
+    groupStartAfter(...fieldValues: any[]): GroupByQuery;
+
+    groupEndBefore(snapshot: GroupSnapshot): GroupByQuery;
+
+    groupEndBefore(...fieldValues: any[]): GroupByQuery;
+
+    groupEndAt(snapshot: GroupSnapshot): GroupByQuery;
+
+    groupEndAt(...fieldValues: any[]): GroupByQuery;
+
+    isEqual(other: GroupByQuery): boolean;
   }
 
   /**
