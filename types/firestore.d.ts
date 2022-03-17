@@ -21,11 +21,13 @@
 // Declare a global (ambient) namespace
 // (used when not using import statement, but just script include).
 declare namespace FirebaseFirestore {
+  export type DocumentFieldValue = any;
+
   /**
    * Document data (for use with `DocumentReference.set()`) consists of fields
    * mapped to values.
    */
-  export type DocumentData = {[field: string]: any};
+  export type DocumentData = {[field: string]: DocumentFieldValue};
 
   /**
    * Similar to Typescript's `Partial<T>`, but allows nested fields to be
@@ -1682,6 +1684,10 @@ declare namespace FirebaseFirestore {
       onError?: (error: Error) => void
     ): () => void;
 
+    aggregate(field: AggregateField): AggregateQuery;
+
+    count(): AggregateQuery;
+
     /**
      * Returns true if this `Query` is equal to the provided one.
      *
@@ -2000,6 +2006,47 @@ declare namespace FirebaseFirestore {
      * Query#endBefore} cursor.
      */
     toQuery(): Query<T>;
+  }
+
+  export interface CountAggregateFieldOptions {
+    readonly upTo?: number;
+  }
+
+  export class AggregateField<T = DocumentFieldValue> {
+    private constructor();
+
+    static count(options?: CountAggregateFieldOptions): AggregateField<number>;
+
+    isEqual(other: AggregateField): boolean;
+  }
+
+  export class AggregateQuerySnapshot {
+    private constructor();
+
+    readonly query: AggregateQuery;
+
+    readonly readTime: Timestamp;
+
+    readonly aggregations: Array<AggregateField>;
+
+    get<T>(field: AggregateField<T>): T;
+
+    isEqual(other: AggregateQuerySnapshot): boolean;
+  }
+
+  export class AggregateQuery {
+    private constructor();
+
+    readonly query: Query<DocumentData>;
+
+    get(): Promise<AggregateQuerySnapshot>;
+
+    onSnapshot(
+      onNext: (snapshot: AggregateQuerySnapshot) => void,
+      onError?: (error: Error) => void
+    ): () => void;
+
+    isEqual(other: AggregateQuery): boolean;
   }
 
   /**
